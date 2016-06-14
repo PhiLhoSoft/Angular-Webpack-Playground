@@ -27,7 +27,7 @@ module.exports = function karmaConfig(config)
 	var plugins =
 	[
 		'karma-webpack', 'karma-sourcemap-loader',
-		'karma-painless',
+		'karma-jasmine',
 		'karma-chrome-launcher', 'karma-firefox-launcher',
 	];
 	if (verbose)
@@ -46,24 +46,23 @@ module.exports = function karmaConfig(config)
 	{
 		// Reference: https://github.com/mlex/karma-spec-reporter
 		// Set reporter to print detailed results to console.
-		//'progress',
 		reporters = [ 'spec', 'jsonsummary' ];
 	}
 	if (!debug)
 	{
 		// Reference: https://github.com/karma-runner/karma-coverage
 		// Output code coverage files.
-		reporters.push('growl');
 		reporters.push('coverage');
+		reporters.push('growl');
 	}
 
 	var configuration =
 	{
 		frameworks:
 		[
-			// Reference: https://github.com/taylorhakes/karma-painless
-			// Set framework to Painless
-			'painless'
+			// Reference: https://github.com/karma-runner/karma-jasmine
+			// Set framework to Jasmine
+			'jasmine'
 		],
 
 		plugins: plugins,

@@ -7,5 +7,5 @@ require('angular');
 require('angular-mocks/angular-mocks');
 
 var testsContext = require.context(".", true, /.test$/);
-console.log("Tests context", testsContext);
+console.log("Tests context", testsContext.keys());
 testsContext.keys().forEach(testsContext);

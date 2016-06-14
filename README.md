@@ -2,7 +2,8 @@
 
 ## PhiLhoSoft's notes
 
-This is basically a fork of https://github.com/preboot/angular-webpack for the updated Webpack configuration, and of https://github.com/angular-tips/webpack-demo for the non-trivial AngularjS example, with my own style / enhancements.
+This is basically a fork of https://github.com/preboot/angular-webpack for the updated Webpack configuration, and of https://github.com/angular-tips/webpack-demo for the non-trivial AngularjS example, with my own style / enhancements. Plus I stick to ES5, so no Babel usage here.
+
 I initially tried to use the Painless test library (https://github.com/taylorhakes/painless) but I failed to make it work with Webpack (https://github.com/taylorhakes/painless/issues/20). So I commit this version as first commit, but I will rather go back to Jasmine to go on.
 
 ## Original README

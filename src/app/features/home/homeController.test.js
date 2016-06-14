@@ -1,36 +1,26 @@
 'use strict';
 
-var painless = require('painless');
-var test = painless.createGroup();
-var assert = painless.assert;
-
 var angular = require('angular');
-var app = require('../../app');
+//~ var app = require('../../app');
+var home = require('./index');
 
-var ctrl;
-
-test.beforeEach(function ()
+describe('Controller: Home', function ()
 {
-	angular.mock.module(app);
+	var ctrl;
 
-	angular.mock.inject(function ($controller)
+	beforeEach(function ()
 	{
-		ctrl = $controller('HomeController', {});
+//~ 		angular.mock.module(app);
+		angular.mock.module(home);
+
+		angular.mock.inject(function ($controller)
+		{
+			ctrl = $controller('HomeController', {});
+		});
 	});
-});
 
-// Callback test
-test('callback test', function (done)
-{
-	setTimeout(function ()
+	it('should have name initialized to "World"', function ()
 	{
-		assert.deepEqual({ a: '1' }, { a: '1' });
-		done();
-	}, 10);
-});
-
-test('name is initialized to World', function (done)
-{
-	assert.equal(ctrl.name, 'World');
-	done();
+		expect(ctrl.name).toBe('World');
+	});
 });

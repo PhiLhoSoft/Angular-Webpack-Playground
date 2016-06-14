@@ -3,6 +3,7 @@
 'use strict';
 
 // Modules
+var nodePath = require('path');
 var webpack = require('webpack');
 var autoprefixer = require('autoprefixer');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -131,18 +132,6 @@ module.exports = function makeWebpackConfig()
 				loader: 'raw'
 			}
 		],
-		noParse:
-		[
-			/sinon\.js/, // Don't load sinon's source and its problematic requires
-//			/painless/,
-		],
-		resolve:
-		{
-			alias:
-			{
-				'sinon': 'sinon/pkg/sinon' // Loads the bundled version instead (see https://github.com/webpack/webpack/issues/304)
-			}
-		}
 	};
 
 	// ISTANBUL LOADER
@@ -154,7 +143,7 @@ module.exports = function makeWebpackConfig()
 		config.module.preLoaders.push(
 		{
 			test: /\.js$/,
-			include: __dirname + '/src/app/',
+			include: nodePath.resolve('src/app/'),
 			exclude:
 			[
 				/node_modules/,
