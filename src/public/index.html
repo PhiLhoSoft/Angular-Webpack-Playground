@@ -1,0 +1,25 @@
+<!doctype html>
+<html ng-app="DemoApp" lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Angular Demo App</title>
+	<link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+
+	<base href="/">
+</head>
+<body>
+
+	<main>
+		<h1 class="title">Hello from Angular !</h1>
+
+		<!-- Images (and assets) are parsed and loaded from within the public directory -->
+		<img src="/img/logo.png">
+
+		<ui-view></ui-view>
+	</main>
+	<footer>
+		<a ng-href="{{url}}">Webpack Angular Starter</a>
+	</footer>
+
+</body>
+</html>
