@@ -2,13 +2,18 @@
 
 // var angular = require('angular');
 
-SettingsController.$inject = [];
+SettingsController.$inject = [ '$scope', 'nameModel' ];
 
-function SettingsController()
+function SettingsController($scope, nameModel)
 {
 	var ctrl = this;
 
-	ctrl.foo = function () { return 42; };
+	ctrl.names = nameModel.names;
+
+	$scope.$on('addName', function __addName(event, name)
+	{
+		nameModel.add(name);
+	});
 }
 
 module.exports = SettingsController;

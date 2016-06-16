@@ -1,8 +1,11 @@
 'use strict';
 
 var angular = require('angular');
-//~ var app = require('../../app');
-var settings = require('./index');
+var settings = require('./');
+// var app = require('../../app');
+var model = require('../../model/');
+
+var scope, nameModel;
 
 describe('Controller: Settings', function ()
 {
@@ -10,18 +13,26 @@ describe('Controller: Settings', function ()
 
 	beforeEach(function ()
 	{
-//~ 		angular.mock.module(app);
-		angular.mock.module(settings);
+		angular.mock.module(settings, model);
 
-		angular.mock.inject(function ($controller)
+		angular.mock.inject(function ($injector, $rootScope, $controller)
 		{
-			ctrl = $controller('SettingsController', {});
+			scope = $rootScope.$new();
+			nameModel = $injector.get('nameModel');
+			ctrl = $controller('SettingsController', { $scope: scope });
 		});
 	});
 
-	it('should do', function ()
+	it('should have the list of names', function ()
 	{
-		expect(ctrl.foo()).toBe(42);
-		expect('Foo').toBe('Foo');
+		expect(ctrl.names).toBe(nameModel.names);
+	});
+
+	it('should update the list of names', function ()
+	{
+		var name = 'Hodor';
+		scope.$emit('addName', name);
+
+		expect(ctrl.names).toContain(name);
 	});
 });

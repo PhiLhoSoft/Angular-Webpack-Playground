@@ -14,10 +14,12 @@ var CopyWebpackPlugin = require('copy-webpack-plugin');
  * Env
  * Get NPM lifecycle event to identify the environment.
  * That's the name of the ran NPM script:
- * npm test        -> run tests once
- * npm test-watch  -> run tests and watch for changes
- * npm build       -> build for production
+ * npm test        -> run tests once, with coverage
  * npm start       -> build for dev / debug, run server: ENV === 'server'
+ * npm run test-watch   -> run tests and watch for changes, with coverage
+ * npm run test-debug   -> run tests in Chrome and watch for changes, without coverage: this allows to debug the tests in Chrome
+ * npm run test-verbose -> run tests in with special reporters
+ * npm run build        -> build for production
  */
 var ENV = process.env.npm_lifecycle_event;
 var isTest = ENV.startsWith('test');
@@ -26,11 +28,12 @@ var isTest = ENV.startsWith('test');
 var isDebugTest = ENV === 'test-debug';
 var isProd = ENV === 'build';
 console.log('NPM Lifecycle Event:', ENV, isTest, isProd);
-// Exclude node_modules and test files from some operations
-var nodeAndTests =
+// Exclude generated files, node_modules and test files from some operations
+var notSource =
 [
-	/node_modules/,
-	/\.test\.js$/
+	/\/dist\//,
+	/\/node_modules\//,
+	/\.test\.js$/,
 ];
 
 
@@ -107,25 +110,7 @@ module.exports = function makeWebpackConfig()
 	var cssPipeline = 'css?sourceMap!postcss!stylus';
 	config.module =
 	{
-		preLoaders:
-		[
-			{
-				test: /\.html$/,
-				loader: 'htmlhint',
-				exclude: /node_modules/
-			},
-			{
-				test: /\.styl$/,
-				// loader: isProd ? 'stylint' : 'null'
-				loader: 'stylint'
-			},
-			{
-				test: /\.js$/,
-				// loader: isProd ? 'eslint-loader' : 'null',
-				loader: 'eslint-loader',
-				exclude: nodeAndTests
-			},
-		],
+		preLoaders: [],
 		loaders:
 		[
 			{
@@ -187,9 +172,30 @@ module.exports = function makeWebpackConfig()
 		{
 			test: /\.js$/,
 			include: nodePath.resolve('src/app/'),
-			exclude: nodeAndTests,
+			exclude: notSource,
 			loader: 'istanbul-instrumenter'
 		});
+	}
+
+	if (!isTest)
+	{
+		[
+			{
+				test: /\.html$/,
+				loader: 'htmlhint',
+				exclude: notSource
+			},
+			{
+				test: /\.styl$/,
+				loader: 'stylint',
+				exclude: notSource
+			},
+			{
+				test: /\.js$/,
+				loader: 'eslint-loader',
+				exclude: notSource
+			},
+		].forEach(function (preLoader) { config.module.preLoaders.push(preLoader); });
 	}
 
 	/**

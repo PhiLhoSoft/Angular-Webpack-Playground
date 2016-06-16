@@ -7,10 +7,12 @@ var uirouter = require('angular-ui-router');
 
 var routing = require('./home.routes');
 var HomeController = require('./homeController');
-var randomNames = require('../../services/randomNamesService');
+
+var model = require('../../model/');
+var randomness = require('../../services/randomnessService');
 var greeting = require('../../directives/greetingDirective');
 
-module.exports = angular.module('app.home', [ uirouter, randomNames, greeting ])
+module.exports = angular.module('app.home', [ uirouter, model, randomness, greeting ])
 	.config(routing)
 	.controller('HomeController', HomeController)
 	.name;

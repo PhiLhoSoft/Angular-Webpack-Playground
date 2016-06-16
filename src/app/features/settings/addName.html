@@ -1,0 +1,16 @@
+<div id="add-name">
+	<form name="AddNameForm" class="demo-form">
+
+		<ul>
+			<li ng-repeat="name in an.list">{{name}}</li>
+		</ul>
+
+		<div class="form-group row">
+			<label for="name-input" class="form-control-label">New name</label>
+			<input type="text" class="format-input" id="name-input" aria-labelledby="format-select-title"
+				ng-model="an.name" ng-change="an.check()">
+			<button class="btn" ng-click="an.add()" ng-disabled="an.isDisabled" title="{{an.addNameTooltip}}">Add name</button>
+		</div>
+
+	</form>
+</div>

@@ -14,6 +14,7 @@ function greeting()
 	};
 }
 
+// Reusable directive is isolated in its own module...
 module.exports = angular.module('directives.greeting', [])
 	.directive('greeting', greeting)
 	.name;

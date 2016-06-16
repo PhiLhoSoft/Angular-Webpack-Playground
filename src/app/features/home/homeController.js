@@ -2,9 +2,9 @@
 
 // var angular = require('angular');
 
-HomeController.$inject = [ 'randomNames' ];
+HomeController.$inject = [ 'nameModel', 'randomness' ];
 
-function HomeController(randomNames)
+function HomeController(nameModel, randomness)
 {
 	var ctrl = this;
 
@@ -12,12 +12,12 @@ function HomeController(randomNames)
 
 	ctrl.changeName = function ()
 	{
-		ctrl.name = 'Webpack AngularJS Demo';
+		ctrl.name = nameModel.applicationName;
 	};
 
 	ctrl.randomizeName = function ()
 	{
-		ctrl.name = randomNames.getName();
+		ctrl.name = randomness.getFromArray(nameModel.names);
 	};
 }
 
