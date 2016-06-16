@@ -1,5 +1,5 @@
 <!doctype html>
-<html ng-app="DemoApp" lang="en">
+<html ng-app="demo-app" lang="en">
 <head>
 	<meta charset="UTF-8">
 	<title>Angular Demo App</title>
@@ -9,14 +9,14 @@
 </head>
 <body>
 
+	<nav>
+		<a ui-sref="home">Home</a> | <a ui-sref="settings">Settings</a> | <a ui-sref="about">About</a>
+	</nav>
+
 	<main>
-		<h1 class="title">Hello from Angular !</h1>
-
-		<!-- Images (and assets) are parsed and loaded from within the public directory -->
-		<img src="/img/logo.png">
-
 		<ui-view></ui-view>
 	</main>
+
 	<footer>
 		<a ng-href="{{url}}">Webpack Angular Starter</a>
 	</footer>

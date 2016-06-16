@@ -8,7 +8,6 @@ function HomeController(randomNames)
 {
 	var ctrl = this;
 
-	ctrl.random = randomNames;
 	ctrl.name = 'World';
 
 	ctrl.changeName = function ()
@@ -16,9 +15,9 @@ function HomeController(randomNames)
 		ctrl.name = 'Webpack AngularJS Demo';
 	};
 
-	ctrl.randomName = function ()
+	ctrl.randomizeName = function ()
 	{
-		ctrl.name = ctrl.random.getName();
+		ctrl.name = randomNames.getName();
 	};
 }
 

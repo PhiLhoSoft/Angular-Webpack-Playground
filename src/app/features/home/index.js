@@ -1,6 +1,6 @@
 'use strict';
 
-require('./home.css');
+require('./home.styl');
 
 var angular = require('angular');
 var uirouter = require('angular-ui-router');

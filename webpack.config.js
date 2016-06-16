@@ -20,9 +20,19 @@ var CopyWebpackPlugin = require('copy-webpack-plugin');
  * npm start       -> build for dev / debug, run server: ENV === 'server'
  */
 var ENV = process.env.npm_lifecycle_event;
-var isTest = ENV === 'test' || ENV === 'test-watch';
+var isTest = ENV.startsWith('test');
+// Debug test in browser: don't use coverage which instruments / messes the code.
+// Find sources in webpack://./src/app in Chrome DevTools.
+var isDebugTest = ENV === 'test-debug';
 var isProd = ENV === 'build';
-console.log('NPM Lifecycle Event', ENV);
+console.log('NPM Lifecycle Event:', ENV, isTest, isProd);
+// Exclude node_modules and test files from some operations
+var nodeAndTests =
+[
+	/node_modules/,
+	/\.test\.js$/
+];
+
 
 module.exports = function makeWebpackConfig()
 {
@@ -53,7 +63,7 @@ module.exports = function makeWebpackConfig()
 	config.output = isTest ? {} :
 	{
 		// Absolute output directory
-		path: __dirname + '/dist',
+		path: nodePath.resolve('dist/'),
 
 		// Output path from the view of the page
 		// Uses webpack-dev-server in development
@@ -81,7 +91,7 @@ module.exports = function makeWebpackConfig()
 	{
 		config.devtool = 'source-map';
 	}
-	else
+	else // server mode (dev / debug)
 	{
 		config.devtool = 'eval-source-map';
 	}
@@ -94,25 +104,58 @@ module.exports = function makeWebpackConfig()
 	 */
 
 	// Initialize module
+	var cssPipeline = 'css?sourceMap!postcss!stylus';
 	config.module =
 	{
-		preLoaders: [],
+		preLoaders:
+		[
+			{
+				test: /\.html$/,
+				loader: 'htmlhint',
+				exclude: /node_modules/
+			},
+			{
+				test: /\.styl$/,
+				// loader: isProd ? 'stylint' : 'null'
+				loader: 'stylint'
+			},
+			{
+				test: /\.js$/,
+				// loader: isProd ? 'eslint-loader' : 'null',
+				loader: 'eslint-loader',
+				exclude: nodeAndTests
+			},
+		],
 		loaders:
 		[
 			{
-				// CSS LOADER
-				// Reference: https://github.com/webpack/css-loader
-				// Allow loading CSS through JS.
+				// STYLUS LOADER
+				// Reference: https://github.com/shama/stylus-loader
+				// Allow processing Stylus files.
 				//
 				// Reference: https://github.com/postcss/postcss-loader
-				// Postprocess your CSS with PostCSS plugins.
-				test: /\.css$/,
+				// Postprocess your CSS with PostCSS plugins. Here, using Autoprefixer to add vendor prefixes depending on browser versions.
+				//
+				// Reference: https://github.com/webpack/css-loader
+				// Allow loading CSS through JS (with require('foo.css')).
+				//
 				// Reference: https://github.com/webpack/extract-text-webpack-plugin
-				// Extract CSS files in production builds
+				// Then extract CSS files (out of JS) in production builds
 				//
 				// Reference: https://github.com/webpack/style-loader
-				// Use style-loader in development.
-				loader: isTest ? 'null' : ExtractTextPlugin.extract('style', 'css?sourceMap!postcss')
+				// Adds CSS to the DOM by injecting a <style> tag. Used in development.
+				test: /\.styl$/,
+				// loader: 'style-loader!css-loader!stylus-loader'
+				loader:
+					// Test: no CSS needed
+					isTest ?
+						'null' :
+						// Prod: extract CSS to a separate file (loads in parallel with JS)
+						// (isProd ?
+							ExtractTextPlugin.extract('style', cssPipeline)
+							// :
+							// // Dev: leave CSS in JS, allows hot reloading
+							// cssPipeline)
 			},
 			{
 				// ASSET LOADER
@@ -130,7 +173,7 @@ module.exports = function makeWebpackConfig()
 				// Allow loading HTML through JS.
 				test: /\.html$/,
 				loader: 'raw'
-			}
+			},
 		],
 	};
 
@@ -138,17 +181,13 @@ module.exports = function makeWebpackConfig()
 	// Reference: https://github.com/deepsweet/istanbul-instrumenter-loader
 	// Instrument JS files with Istanbul for subsequent code coverage reporting.
 	// Skips node_modules and files that end with .test.js.
-	if (isTest)
+	if (isTest && !isDebugTest)
 	{
 		config.module.preLoaders.push(
 		{
 			test: /\.js$/,
 			include: nodePath.resolve('src/app/'),
-			exclude:
-			[
-				/node_modules/,
-				/\.test\.js$/
-			],
+			exclude: nodeAndTests,
 			loader: 'istanbul-instrumenter'
 		});
 	}
@@ -213,7 +252,7 @@ module.exports = function makeWebpackConfig()
 			new CopyWebpackPlugin(
 			[
 				{
-					from: __dirname + '/src/public'
+					from: nodePath.resolve('src/public/')
 				}
 			])
 		);

@@ -92,6 +92,10 @@ module.exports = function karmaConfig(config)
 		coverageReporter:
 		{
 			dir: 'coverage/',
+			subdir: function (browser)
+			{
+				return browser.toLowerCase().split(/[ /-]/)[0];
+			},
 			reporters:
 			[
 				{ type: 'text-summary' },

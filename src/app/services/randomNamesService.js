@@ -4,16 +4,18 @@ var angular = require('angular');
 
 function RandomNames()
 {
-	this.names = [ 'John', 'Elisa', 'Mark', 'Annie', 'Reginald', 'Alexandra', 'Florian', 'Clement', 'Philippe' ];
+	var rn = this;
 
-	this.getName = function ()
+	rn.names = [ 'John', 'Elisa', 'Mark', 'Annie', 'Reginald', 'Alexandra', 'Florian', 'Clement', 'Philippe' ];
+
+	rn.getName = function ()
 	{
-		var totalNames = this.names.length;
+		var totalNames = rn.names.length;
 		var random = Math.floor(Math.random() * totalNames);
-		return this.names[random];
+		return rn.names[random];
 	};
 }
 
 module.exports = angular.module('services.random-names', [])
-  .service('randomNames', RandomNames)
-  .name;
+	.service('randomNames', RandomNames)
+	.name;

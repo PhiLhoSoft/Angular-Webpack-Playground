@@ -1,6 +1,12 @@
+<h1 class="title">Hello from Angular !</h1>
+
+<!-- Images (and assets) are parsed and loaded from within the public directory -->
+<img src="/img/logo.png">
+
+
 <div id="home-header" class="jumbotron">
 	<greeting name="home.name"></greeting>
 </div>
 
-<button class="btn btn-primary" ng-click="home.changeName()">Change</button>
-<button class="btn btn-danger" ng-click="home.randomName()">Random</button>
+<button class="btn btn-primary" ng-click="home.changeName()">Greet myself</button>
+<button class="btn btn-danger" ng-click="home.randomizeName()">Randomize</button>

@@ -23,4 +23,18 @@ describe('Controller: Home', function ()
 	{
 		expect(ctrl.name).toBe('World');
 	});
+
+	it('should change name', function ()
+	{
+		ctrl.changeName();
+
+		expect(ctrl.name).toBe('Webpack AngularJS Demo');
+	});
+
+	it('should provide a random name', function ()
+	{
+		ctrl.randomizeName();
+
+		expect(ctrl.name).not.toBe('World');
+	});
 });
