@@ -1,4 +1,4 @@
-# angular-webpack
+# angular-webpack-playground
 
 ## PhiLhoSoft's notes
 
@@ -10,6 +10,9 @@ As I don't use ES6, I just use Istanbul for coverage. I added run modes for Karm
 I added some linters for HTML, CSS and JS.
 I added a Stylus compilation phase (should be trivial to adapt to Sass / Less or other similar).
 I added some modules / features (other router states), and some in-module controllers / etc. to better explore AngularJS usage.
+Also used ng-include to cope with a legacy project using it: the require is then done by $templateCache, following http://stackoverflow.com/a/36006346/15459 instructions.
+I test the production build with the simple https://github.com/indexzero/http-server tool, using the command `http-server dist -p 8088 -o` from the root of the project.
+In dev mode, I switched from `eval-source-map` to plain `source-map` (probably slower) because breakpoints in startup (app.js) were not found by Chrome.
 
 
 ## Original README

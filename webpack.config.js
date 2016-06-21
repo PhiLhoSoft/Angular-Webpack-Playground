@@ -96,7 +96,8 @@ module.exports = function makeWebpackConfig()
 	}
 	else // server mode (dev / debug)
 	{
-		config.devtool = 'eval-source-map';
+		// config.devtool = 'eval-source-map'; // Perhaps faster, but doesn't work on startup (eg. breakpoints in app.js)
+		config.devtool = 'source-map';
 	}
 
 	/**
@@ -135,21 +136,17 @@ module.exports = function makeWebpackConfig()
 					// Test: no CSS needed
 					isTest ?
 						'null' :
-						// Prod: extract CSS to a separate file (loads in parallel with JS)
-						// (isProd ?
-							ExtractTextPlugin.extract('style', cssPipeline)
-							// :
-							// // Dev: leave CSS in JS, allows hot reloading
-							// cssPipeline)
+						// Extract CSS to a separate file (loads in parallel with JS, so faster)
+						ExtractTextPlugin.extract('style', cssPipeline)
 			},
 			{
 				// ASSET LOADER
 				// Reference: https://github.com/webpack/file-loader
-				// Copy png, jpg, jpeg, gif, svg, woff, woff2, ttf, eot files to output.
+				// Copy png, jpg, jpeg, gif, ico, svg, woff, woff2, ttf, eot files to output.
 				// Rename the file using the asset hash.
 				// Pass along the updated reference to your code.
 				// You can add here any file extension you want to get copied to your output.
-				test: /\.(png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/,
+				test: /\.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/,
 				loader: 'file'
 			},
 			{

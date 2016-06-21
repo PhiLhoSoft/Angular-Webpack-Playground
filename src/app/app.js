@@ -3,7 +3,7 @@
 // Inject CSS in the application (needed only once)
 require('../style/app.styl');
 
-// Libraries
+// Libraries, using the NPM name (used in package.json)
 var angular = require('angular');
 var uirouter = require('angular-ui-router');
 
@@ -18,11 +18,21 @@ module.exports = angular.module('demo-app', [ uirouter, model, home, settings ])
 	.config(routing)
 	.run(
 	[
-		// Some services / factories are injected here to bootstrap them
+		'$templateCache',
+		function ($templateCache)
+		{
+			// Put in cache the files that are ng-include'd in templates
+			$templateCache.put('included.html', require('./included.html'));
+		}
+	])
+	.run(
+	[
+		// Some services / factories can be injected here to bootstrap them
 		'$rootScope', '$log',
 		function ($rootScope, $log)
 		{
 			$rootScope.url = 'https://github.com/angular-tips/webpack-demo/';
+			$rootScope.url2 = 'https://github.com/PhiLhoSoft/Angular-Webpack-Playground/';
 			$log.info('Starting the application.');
 		}
 	])
