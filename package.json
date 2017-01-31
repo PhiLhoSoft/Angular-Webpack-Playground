@@ -16,6 +16,7 @@
 	"homepage": "https://github.com/Foxandxss/angular-webpack-workflow",
 	"dependencies":
 	{
+		"jquery": "^2.2.3",
 		"angular": "^1.5.0",
 		"angular-ui-router": "^0.3.1"
 	},
@@ -43,18 +44,23 @@
 
 		"autoprefixer": "^6.0.3",
 		"stylus": "^0.54.5",
+		"nib": "~1.1.0",
+
 		"eslint": "^2.12.0",
 		"htmlhint": "^0.9.13",
 		"stylint": "^1.3.10",
 
 		"webpack": "^1.12.13",
 		"webpack-dev-server": "^1.14.1",
+		"webpack-fail-plugin": "^1.0.5",
+		"remove-webpack-plugin": "^1.1.1",
 		"copy-webpack-plugin": "^1.1.1",
 		"extract-text-webpack-plugin": "^1.0.1",
 		"html-webpack-plugin": "^2.7.1",
 		"null-loader": "^0.1.1",
 		"raw-loader": "^0.5.1",
 		"file-loader": "^0.8.4",
+		"expose-loader": "^0.7.1",
 		"css-loader": "^0.23.0",
 		"style-loader": "^0.13.0",
 		"stylus-loader": "^2.1.1",

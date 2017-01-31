@@ -48,7 +48,7 @@ module.exports = angular.module('demo-app', [ uirouter, model, home, settings ])
 			{
 				// Possibly get information from server...
 				ctrl.productName = nameModel.applicationName;
-				ctrl.productVersion = '0.1';
+				ctrl.productVersion = '0.2';
 			};
 
 			// See http://www.befundoo.com/university/tutorials/angularjs-2-controllers/ (and good idea anyway)

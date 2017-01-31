@@ -5,7 +5,6 @@ require('./home.styl');
 var angular = require('angular');
 var uirouter = require('angular-ui-router');
 
-var routing = require('./home.routes');
 var HomeController = require('./homeController');
 
 var model = require('../../model/');
@@ -13,7 +12,6 @@ var randomness = require('../../services/randomnessService');
 var greeting = require('../../directives/greetingDirective');
 
 module.exports = angular.module('app.home', [ uirouter, model, randomness, greeting ])
-	.config(routing)
 	/*
 	We declare the controller here, instead of doing it in homeController.js in the classical Angular way,
 	because otherwise the controller file would be isolated from the Webpack tree of dependencies, so it wouldn't process it:

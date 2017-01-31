@@ -3,12 +3,20 @@
 'use strict';
 
 // Modules
-var nodePath = require('path');
+var nodePath = require('path'); // Some settings want relative paths, others want absolute ones, given via resolve()
 var webpack = require('webpack');
 var autoprefixer = require('autoprefixer');
+
+var WebpackFailPlugin = require('webpack-fail-plugin');
+var RemoveWebpackPlugin = require('remove-webpack-plugin');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
+
+var srcPath = './src/';
+var prodPath = './public/';
+var srcScriptPath = srcPath + 'app/';
+var srcAssetsPath = srcPath + 'assets/';
 
 /**
  * Env
@@ -19,25 +27,35 @@ var CopyWebpackPlugin = require('copy-webpack-plugin');
  * npm run test-watch   -> run tests and watch for changes, with coverage
  * npm run test-debug   -> run tests in Chrome and watch for changes, without coverage: this allows to debug the tests in Chrome
  * npm run test-verbose -> run tests in with special reporters
+ * npm run stats        -> generate a statistics file in Json format. Can be used by webpack-bundle-analyzer.
  * npm run build        -> build for production
  */
+var isTest = false, isDebugTest = false, isDebug = false, isProd = false, stats = false;
 var ENV = process.env.npm_lifecycle_event;
-var isTest = ENV.startsWith('test');
-// Debug test in browser: don't use coverage which instruments / messes the code.
-// Find sources in webpack://./src/app in Chrome DevTools.
-var isDebugTest = ENV === 'test-debug';
-var isProd = ENV === 'build';
-console.log('NPM Lifecycle Event:', ENV, isTest, isProd);
-// Exclude generated files, node_modules and test files from some operations
-var notSource =
-[
-	/\/dist\//,
-	/\/node_modules\//,
-	/\.test\.js$/,
-];
+if (ENV === undefined) // We ran Webpack directly without going through NPM: we want a prod build.
+{
+	isProd = true;
+}
+else
+{
+	isTest = ENV.startsWith('test');
+	// Debug test in browser: don't use coverage which instruments / messes the code.
+	// Find sources in webpack://./src/app in Chrome DevTools or use Ctrl+P to find them by name.
+	isDebugTest = ENV === 'test-debug';
+	isDebug = ENV === 'server';
+	stats = ENV === 'stats';
+	isProd = ENV === 'build' || (!isTest && !isDebug && !stats); // Unknown -> default to prod
+}
+if (!stats)
+{
+	console.log('NPM Lifecycle Event:', ENV, '-- test?', isTest, '| debug?', isDebug, '| prod?', isProd);
+}
+// Collect all dependencies declared in package.json
+var dependencies = require('./package.json').dependencies;
 
+module.exports = makeWebpackConfig();
 
-module.exports = function makeWebpackConfig()
+function makeWebpackConfig()
 {
 	/**
 	 * Config
@@ -54,7 +72,9 @@ module.exports = function makeWebpackConfig()
 	 */
 	config.entry = isTest ? {} :
 	{
-		app: './src/app/app.js'
+		app: srcScriptPath + 'app.js',
+		// Defines the modules that go to the 'vendor' bundle.
+		vendor: Object.keys(dependencies),
 	};
 
 	/**
@@ -66,20 +86,51 @@ module.exports = function makeWebpackConfig()
 	config.output = isTest ? {} :
 	{
 		// Absolute output directory
-		path: nodePath.resolve('dist/'),
+		path: nodePath.resolve('public/'),
 
 		// Output path from the view of the page
 		// Uses webpack-dev-server in development
 		publicPath: isProd ? '/' : 'http://localhost:8080/',
 
 		// Filename for entry points
-		// Only adds hash in build mode
-		filename: isProd ? '[name].[hash].js' : '[name].bundle.js',
+		// Only adds hash in build mode. Use chunkhash instead of hash, so that vendor chunk remains stable across builds
+		// (long term caching, see https://medium.com/@okonetchnikov/long-term-caching-of-static-assets-with-webpack-1ecb139adb95 for detailed explanations)
+		filename: isProd ? '[name].[chunkhash].js' : '[name].bundle.js',
 
 		// Filename for non-entry points
 		// Only adds hash in build mode
-		chunkFilename: isProd ? '[name].[hash].js' : '[name].bundle.js'
+		chunkFilename: isProd ? '[name].[chunkhash].js' : '[name].bundle.js'
 	};
+
+	/**
+	 * Resolve
+	 * Reference: http://webpack.github.io/docs/configuration.html#resolve
+	 * Alias some paths, to avoid using require('../../foo') depending on depth in hierarchy...
+	 */
+	config.resolve =
+	{
+		alias:
+		{
+			// awp for angular-webpack-playground
+			'awp-root': nodePath.resolve(srcScriptPath),
+			'awp-app': nodePath.resolve(srcScriptPath, 'features'),
+			'awp-home': nodePath.resolve(srcScriptPath, 'features/home'),
+			'awp-settings': nodePath.resolve(srcScriptPath, 'features/settings'),
+			'awp-model': nodePath.resolve(srcScriptPath, 'model'),
+			'awp-directives': nodePath.resolve(srcScriptPath, 'directives'),
+			'awp-services': nodePath.resolve(srcScriptPath, 'services'),
+		},
+		//extensions: [ '', '.html', '.js' ],
+	};
+
+	/**
+	 * Don't parse large libraries putting stuff at the global level.
+	 * http://stackoverflow.com/questions/28969861/managing-jquery-plugin-dependency-in-webpack
+	 */
+	// config.noParse =
+	// [
+	// 	/[\/\\]node_modules[\/\\]angular[\/\\]angular\.js$/
+	// ];
 
 	/**
 	 * Devtool
@@ -90,13 +141,14 @@ module.exports = function makeWebpackConfig()
 	{
 		config.devtool = 'inline-source-map';
 	}
+	else if (isDebug) // server mode (dev / debug)
+	{
+		// config.devtool = 'eval-source-map'; // Perhaps faster to generate, but doesn't work on startup (eg. breakpoints in app.js)
+		// config.devtool = 'source-map'; // So switch to this one if you have to step in app.js
+		config.devtool = 'cheap-module-eval-source-map';
+	}
 	else if (isProd)
 	{
-		config.devtool = 'source-map';
-	}
-	else // server mode (dev / debug)
-	{
-		// config.devtool = 'eval-source-map'; // Perhaps faster, but doesn't work on startup (eg. breakpoints in app.js)
 		config.devtool = 'source-map';
 	}
 
@@ -114,6 +166,14 @@ module.exports = function makeWebpackConfig()
 		preLoaders: [],
 		loaders:
 		[
+			{
+				// Load jQuery and expose it as global variable before loading AngularJS,
+				// so that the latter will use it instead of jqLite.
+				// Reference: https://github.com/webpack/expose-loader
+				// and http://stackoverflow.com/questions/36065931/webpack-how-to-make-angular-auto-detect-jquery-and-use-it-as-angular-element-in
+				test: require.resolve('jquery'), // Full path in node_modules
+				loader: 'expose?$!expose?jQuery'
+			},
 			{
 				// STYLUS LOADER
 				// Reference: https://github.com/shama/stylus-loader
@@ -140,14 +200,14 @@ module.exports = function makeWebpackConfig()
 						ExtractTextPlugin.extract('style', cssPipeline)
 			},
 			{
-				// ASSET LOADER
-				// Reference: https://github.com/webpack/file-loader
-				// Copy png, jpg, jpeg, gif, ico, svg, woff, woff2, ttf, eot files to output.
-				// Rename the file using the asset hash.
-				// Pass along the updated reference to your code.
-				// You can add here any file extension you want to get copied to your output.
-				test: /\.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/,
-				loader: 'file'
+				// CSS LOADER
+				// For CSS files from modules.
+				test: /\.css$/,
+				loader:
+					isTest ?
+						'null' :
+						// Use the 'style' loader after treatment by the CSS loader (minification with source map)
+						ExtractTextPlugin.extract('style', 'css?sourceMap')
 			},
 			{
 				// HTML LOADER
@@ -158,42 +218,67 @@ module.exports = function makeWebpackConfig()
 			},
 		],
 	};
-
-	// ISTANBUL LOADER
-	// Reference: https://github.com/deepsweet/istanbul-instrumenter-loader
-	// Instrument JS files with Istanbul for subsequent code coverage reporting.
-	// Skips node_modules and files that end with .test.js.
-	if (isTest && !isDebugTest)
+	// ASSET LOADER
+	// Reference: https://github.com/webpack/file-loader
+	// Copy asset files (images, fonts...) to output.
+	// Pass along the updated reference to your code.
+	// You can add here any file extension you want to get copied to your output.
+	if (isProd)
 	{
-		config.module.preLoaders.push(
-		{
-			test: /\.js$/,
-			include: nodePath.resolve('src/app/'),
-			exclude: notSource,
-			loader: 'istanbul-instrumenter'
-		});
+		config.module.loaders.push(
+			{
+				// Manage the font files specifically (warning: SVG can be used for something else than fonts!)
+				test: /\.(svg|woff|woff2|ttf|eot)$/,
+				loader: 'file',
+				query:
+				{
+					name: './fonts/[name].[ext]',
+					publicPath: './'  // A bit clumsy as it generates ./../fonts/xxx but it works. Empty string is seen as false :-(
+				}
+			},
+			{
+				// Templates load flag images per country code, we need to preserve their names (and path)
+				// and we just copy the corresponding folder with the CopyWebpackPlugin, so we prevent emitting the files.
+				test: /[\\\/]flags[\\\/].*\.png$/,
+				loader: 'file',
+				query:
+				{
+					emitFile: false,
+					name: '[name].[ext]',
+					publicPath: prodPath + 'images/flags/',
+				}
+			},
+			{
+				// Handle remaining files. It comes after the others, so it catches the remainder.
+//~ 				test: /[\\\/]images[\\\/][^\\\/]+\.(png|jpg|jpeg|gif)$/, // More specific, doesn't seem necessary
+				test: /\.(png|jpg|jpeg|gif)$/,
+				loader: 'file',
+				query:
+				{
+					emitFile: false,
+					name: '[name].[ext]',
+					publicPath: isProd ? prodPath + 'images/' : srcAssetsPath + 'img/',
+				}
+			}
+		);
+	}
+	else if (!isTest)
+	{
+		// Just copy the files as is
+		config.module.loaders.push(
+			{
+				test: /\.(png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/,
+				loader: 'file',
+			}
+		);
 	}
 
-	if (!isTest)
+	config.stylus =
 	{
-		[
-			{
-				test: /\.html$/,
-				loader: 'htmlhint',
-				exclude: notSource
-			},
-			{
-				test: /\.styl$/,
-				loader: 'stylint',
-				exclude: notSource
-			},
-			{
-				test: /\.js$/,
-				loader: 'eslint-loader',
-				exclude: notSource
-			},
-		].forEach(function (preLoader) { config.module.preLoaders.push(preLoader); });
-	}
+		use: [ require('nib')() ],
+		// Had to import explicitly nib from main style file, to set variables deactivating obsolete Flexbox properties.
+//		import: [ '~nib/lib/nib/index.styl' ] // ~ means "in node_modules directory"
+	};
 
 	/**
 	 * PostCSS
@@ -208,29 +293,107 @@ module.exports = function makeWebpackConfig()
 		})
 	];
 
+	// ISTANBUL LOADER
+	// Reference: https://github.com/deepsweet/istanbul-instrumenter-loader
+	// Instrument JS files with Istanbul for subsequent code coverage reporting.
+	// Skips node_modules and files that end with .test.js.
+	if (isTest && !isDebugTest)
+	{
+		config.module.preLoaders.push(
+		{
+			test: /\.js$/,
+			include: nodePath.resolve(srcScriptPath),
+			exclude: /\.test\.js$/,
+			loader: 'istanbul-instrumenter'
+		});
+	}
+
+	if (!isTest)
+	{
+		config.module.preLoaders.push(
+			{
+				test: /\.html$/,
+				include: nodePath.resolve(srcPath + 'app/'),
+				loader: 'htmlhint'
+			},
+			{
+				test: /\.styl$/,
+				include: nodePath.resolve(srcPath + 'app/styles'),
+				loader: 'stylint'
+			},
+			{
+				test: /\.js$/,
+				include: nodePath.resolve(srcScriptPath),
+				loader: 'eslint-loader'
+			}
+		);
+		config.stylint =
+		{
+			config: nodePath.resolve(srcPath + '.stylintrc')
+		};
+	}
+
 	/**
 	 * Plugins
 	 * Reference: http://webpack.github.io/docs/configuration.html#plugins
 	 * List: http://webpack.github.io/docs/list-of-plugins.html
 	 */
-	config.plugins = [];
+	config.plugins =
+	[
+		// Reference: http://webpack.github.io/docs/list-of-plugins.html#dedupeplugin
+		// Dedupe modules in the output.
+		new webpack.optimize.DedupePlugin(),
+
+		// Reference: http://webpack.github.io/docs/list-of-plugins.html#ignoreplugin
+		// Ignore some modules. Here, avoids loading all locales of Moment.js (rather big! reduces vendor file of 165 KB).
+		// We can then require specific ones. See also http://stackoverflow.com/questions/25384360/how-to-prevent-moment-js-from-loading-locales-with-webpack
+//		new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+
+		// Reference: http://webpack.github.io/docs/list-of-plugins.html#provideplugin
+		// Automatically requires declared libraries creating global variables.
+		new webpack.ProvidePlugin(
+		{
+			$: 'jquery',
+			jQuery: 'jquery',
+			_: 'lodash',
+//			moment: 'moment',
+//			angular: 'angular', // No, we have to require it everywhere anyway
+		}),
+	];
 
 	// Skip rendering index.html in test mode
 	if (!isTest)
 	{
-		// Reference: https://github.com/ampedandwired/html-webpack-plugin
-		// Render index.html
 		config.plugins.push(
+			// Reference: webpack-fail-plugin
+			// See also https://github.com/webpack/webpack/issues/708
+			WebpackFailPlugin,
+
+			// Reference: https://github.com/ampedandwired/html-webpack-plugin
+			// Render index.html, adding paths to generated style and JS files at appropriate places.
 			new HtmlWebpackPlugin(
 			{
-				template: './src/public/index.html',
+				// Instrument the existing index
+				template: srcPath + 'index.html',
+				// Produces it there
+				filename: 'index.html',
+				// Put JS tags at the end of the body (not in the header)
 				inject: 'body'
 			}),
 
 			// Reference: https://github.com/webpack/extract-text-webpack-plugin
-			// Extract CSS files.
-			// Disabled when in test mode or not in build mode.
-			new ExtractTextPlugin('[name].[hash].css', { disable: !isProd })
+			// Extract CSS to one file (otherwise it is inlined in the JS).
+			// Disabled when not in build mode.
+			new ExtractTextPlugin('[name].[chunkhash].css', { disable: !isProd }),
+
+			// Reference: https://github.com/webpack/docs/wiki/list-of-plugins#commonschunkplugin
+			// Separates the libraries from the application.
+			new webpack.optimize.CommonsChunkPlugin(
+			{
+				name: 'vendor',
+				filename: isProd ? 'vendor.[chunkhash].js' : 'vendor.bundle.js',
+				minChunks: Infinity
+			})
 		);
 	}
 
@@ -242,22 +405,37 @@ module.exports = function makeWebpackConfig()
 			// Only emit files when there are no errors.
 			new webpack.NoErrorsPlugin(),
 
-			// Reference: http://webpack.github.io/docs/list-of-plugins.html#dedupeplugin
-			// Dedupe modules in the output.
-			new webpack.optimize.DedupePlugin(),
-
-			// Reference: http://webpack.github.io/docs/list-of-plugins.html#uglifyjsplugin
-			// Minify all JavaScript, switch loaders to minimizing mode.
-			new webpack.optimize.UglifyJsPlugin(),
+			// Reference: https://github.com/aleksei0807/remove-webpack-plugin
+			// Clean the destination directories / files: since names are generated with hashes, they won't be overwritten.
+			new RemoveWebpackPlugin(
+				[ prodPath, ]
+			),
 
 			// Reference: https://github.com/kevlened/copy-webpack-plugin
-			// Copy assets from the public folder.
+			// Copy assets to the destination relative to build directory (declared in 'output' configuration).
+			// Do that instead of using the file-loader because some images are loaded in templates with a computed name
+			// (eg. flags based on country id, etc.) which must be preserved.
 			new CopyWebpackPlugin(
 			[
 				{
-					from: nodePath.resolve('src/public/')
+					from: srcAssetsPath + 'images',
+					to: prodPath + 'images'
+				},
+				{
+					from: srcAssetsPath + 'images/favicon.ico',
+					to: prodPath
+				},
+			]),
+
+			// Reference: http://webpack.github.io/docs/list-of-plugins.html#uglifyjsplugin
+			// Minify all JavaScript, switch loaders to minimizing mode.
+			new webpack.optimize.UglifyJsPlugin(
+			{
+				compress:
+				{
+					warnings: false // Warnings are pointless: we use ESLint, and don't want warnings on libraries!
 				}
-			])
+			})
 		);
 	}
 
@@ -268,9 +446,9 @@ module.exports = function makeWebpackConfig()
 	 */
 	config.devServer =
 	{
-		contentBase: './src/public',
+		contentBase: './src',
 		stats: 'minimal'
 	};
 
 	return config;
-}();
+}

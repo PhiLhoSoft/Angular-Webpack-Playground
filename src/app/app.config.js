@@ -14,6 +14,20 @@ module.exports =
 		$urlRouterProvider.otherwise('/');
 
 		$stateProvider
+			.state('home',
+			{
+				url: '/',
+				template: require('awp-home/home.html'),
+				controller: 'HomeController',
+				controllerAs: 'home'
+			})
+			.state('settings',
+			{
+				url: '/settings',
+				template: require('awp-settings/settings.html'),
+				controller: 'SettingsController',
+				controllerAs: 'settings'
+			})
 			.state('about',
 			{
 				url: '/about',

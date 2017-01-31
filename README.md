@@ -2,7 +2,9 @@
 
 ## PhiLhoSoft's notes
 
-This is basically a fork of https://github.com/preboot/angular-webpack for the updated Webpack configuration, and of https://github.com/angular-tips/webpack-demo for the non-trivial AngularjS example, with my own style / enhancements. Plus I stick to ES5, so no Babel usage here.
+This is basically a fork of https://github.com/preboot/angular-webpack for the updated Webpack configuration, and of https://github.com/angular-tips/webpack-demo for the non-trivial AngularJS example, with my own style / enhancements.
+Plus I stick to ES5, so no Babel usage here.
+Note that this "project" has no real purpose, no business logic, its aim is just to have services, controllers, directives, etc. and to see how to use them in a Webpack project.
 
 I initially tried to use the Painless test library (https://github.com/taylorhakes/painless) but I failed to make it work with Webpack (https://github.com/taylorhakes/painless/issues/20). So I committed this version as first commit, but I went back to Jasmine to go on.
 As I don't use ES6, I just use Istanbul for coverage. I added run modes for Karma (debug, verbose), removing coverage in debug mode.
